@@ -1,39 +1,42 @@
-﻿using BloomCare.Models;
+﻿using BloomCare.DTOs; 
+using BloomCare.Models;
 using BloomCareApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-[Route("api/[controller]")]
-[ApiController]
-public class DevicesController : ControllerBase
+namespace BloomCare.Controllers
 {
-    private readonly BloomCareContext _context;
-
-    public DevicesController(BloomCareContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DevicesController : ControllerBase
     {
-        _context = context;
-    }
 
-    // ربط جهاز جديد أو تحديث اسم النبتة المرتبطة به
-    [HttpPost("register")]
-    public async Task<IActionResult> RegisterDevice([FromBody] Device deviceDto)
-    {
-        // التحقق إذا كان الجهاز مسجلاً مسبقاً
-        var existingDevice = await _context.Devices
-            .FirstOrDefaultAsync(d => d.DeviceUniqueId == deviceDto.DeviceUniqueId);
+      // [ المسؤول عن الاتصال بقاعدة البيانات وإجراء العمليات عليه [إضافة، تعديل، حذف، بحث
+        private readonly BloomCareContext _context;
 
-        if (existingDevice != null)
+        public DevicesController(BloomCareContext context)
         {
-            // إذا كان موجوداً، نقوم بتحديث اسم النبتة فقط
-            existingDevice.PlantName = deviceDto.PlantName;
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Device plant name updated successfully!", data = existingDevice });
+            _context = context;
         }
 
-        // إذا لم يكن موجوداً، نقوم بإضافته جديداً لقاعدة البيانات
-        _context.Devices.Add(deviceDto);
-        await _context.SaveChangesAsync();
+        // نقل الجهاز لنبتة جديدة وتحديد مكان تواجده
+        [HttpPost("switch-plant")]
+        public async Task<IActionResult> SwitchPlant([FromBody] SwitchPlantDto dto)
+        {
+            // التاكد من وجود الجهاز 
+            var device = await _context.Devices.FirstOrDefaultAsync(d => d.DeviceUniqueId == dto.DeviceUniqueId);
+            if (device == null)
+                return NotFound("الجهاز غير موجود");
+            // التاكد من وجود النبتة وحمايتها
+            var plant = await _context.Plants.FirstOrDefaultAsync(p => p.Id == dto.PlantId && p.UserId == dto.UserId);
+            if (plant == null)
+                return NotFound("النبتة غير موجودة أو لا تتبع لهذا المستخدم");
 
-        return Ok(new { message = "Device registered successfully!", data = deviceDto });
+            // تحديث النبتة الحالية للجهاز في الداتابيز
+            device.CurrentPlantId = dto.PlantId;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = $"تم نقل الجهاز بنجاح وأصبح يقرأ للنبتة: {plant.Name}" });
+        }
     }
 }

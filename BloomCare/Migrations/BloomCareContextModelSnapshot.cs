@@ -30,11 +30,10 @@ namespace BloomCare.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("DeviceUniqueId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CurrentPlantId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("PlantName")
+                    b.Property<string>("DeviceUniqueId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -44,7 +43,30 @@ namespace BloomCare.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CurrentPlantId");
+
                     b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("BloomCare.Models.Plant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Plants");
                 });
 
             modelBuilder.Entity("BloomCareApi.Models.SensorReading", b =>
@@ -59,21 +81,46 @@ namespace BloomCare.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("LightLevel")
-                        .HasColumnType("float");
+                    b.Property<float>("Humidity")
+                        .HasColumnType("real");
 
-                    b.Property<double>("SoilMoisture")
-                        .HasColumnType("float");
+                    b.Property<int>("PlantId")
+                        .HasColumnType("int");
 
-                    b.Property<double>("Temperature")
-                        .HasColumnType("float");
+                    b.Property<float>("SoilMoisture")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Temperature")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PlantId");
+
                     b.ToTable("SensorReadings");
+                });
+
+            modelBuilder.Entity("BloomCare.Models.Device", b =>
+                {
+                    b.HasOne("BloomCare.Models.Plant", "CurrentPlant")
+                        .WithMany()
+                        .HasForeignKey("CurrentPlantId");
+
+                    b.Navigation("CurrentPlant");
+                });
+
+            modelBuilder.Entity("BloomCareApi.Models.SensorReading", b =>
+                {
+                    b.HasOne("BloomCare.Models.Plant", "Plant")
+                        .WithMany()
+                        .HasForeignKey("PlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plant");
                 });
 #pragma warning restore 612, 618
         }

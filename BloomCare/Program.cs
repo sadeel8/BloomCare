@@ -1,4 +1,5 @@
 ﻿
+using BloomCare.Models;
 using BloomCare.Services;
 using BloomCareApi.Data;
 using Microsoft.EntityFrameworkCore;
@@ -33,14 +34,17 @@ namespace BloomCare
                 app.UseSwaggerUI();
             }
 
-           // app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
 
             app.MapControllers();
 
-            app.Run();
+
+                app.Run();
+            }
         }
     }
-}
+
+
